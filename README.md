@@ -3,7 +3,7 @@
 
 **Contribution Number:** [1 / 2 / 3]  
 **Student:** [Kyron Castellanos]  
-**Issue:** https://github.com/session-foundation/session-desktop/issues/563
+**Issue:** [https://github.com/session-foundation/session-desktop/issues/563]
 **Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
 
 ---
