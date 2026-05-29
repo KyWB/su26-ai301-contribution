@@ -2,15 +2,25 @@
 # su26-ai301-contribution# Contribution [#]: [Issue Title]
 
 **Contribution Number:** [1 / 2 / 3]  
-**Student:** [Your Name]  
-**Issue:** [GitHub issue link]  
+**Student:** [Kyron Castellanos]  
+**Issue:** [GitHub issue link]](https://github.com/session-foundation/session-desktop/issues/563)] 
 **Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+I chose issue #563, "Resolve ONS anywhere we accept a Session ID", because it directly interfaces with decentralized networking protocols and cryptographic name resolution. As a student focusing on network fundamentals and security, implementing an application-layer lookup mechanism like the Oxen Name System (ONS) provides practical exposure to handling secure identity resolution in production.
+
+I am interested in this because:
+1. It deals with security and identity mapping (resolving human-readable names to cryptographic public keys), matching my academic interests in infrastructure security.
+2. The maintainers have already verified the scope, indicating that it requires building out an input abstraction to handle an asynchronous resolution process, a loading state, and fallback error handling.
+3. The issue is officially labeled "good first issue" and "help wanted," making it an ideal ramp-up project for a new contributor to the Session ecosystem.
+4. It requires debugging data input flows and network request triggers inside a modern desktop client, allowing me to bridge software development with protocol analysis.
+
+From reading the issue description and thread, the problem is that certain user interfaces within the client (such as adding a moderator to an open group) fail to parse an ONS name, treating it as an invalid public key format instead of resolving it. My contribution will update the client's input handling behavior to cleanly intercept inputs, check for ONS strings, resolve them to their corresponding public keys, and seamlessly pass that data forward.
+
+I have commented on the issue thread to formally register my interest in implementing this component.
 
 ---
 
