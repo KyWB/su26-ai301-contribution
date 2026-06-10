@@ -29,19 +29,27 @@ I have commented on the issue thread to formally register my interest in impleme
 
 ### Problem Description
 
-[In your own words, what's broken or missing?]
+The Add Admins dialog in Session Desktop communities only accepts 
+66-character hexadecimal public keys as input. When a user enters 
+an ONS (Oxen Name System) name like "testname", the app rejects it 
+with an error instead of resolving it to its corresponding public key.
 
 ### Expected Behavior
 
-[What should happen?]
+When a user enters a valid ONS name (e.g. "testname") into any field 
+that accepts a Session ID, the app should asynchronously resolve the 
+ONS name to its 66-character hex public key and proceed with that value.
 
 ### Current Behavior
 
-[What actually happens?]
+The app immediately rejects ONS names with the toast error: 
+"This Account ID is invalid. Please check and try again."
 
 ### Affected Components
 
-[Which parts of the codebase are involved?]
+- ts/components/dialog/ModeratorsAddDialog.tsx (validation logic)
+- ts/session/utils/String.ts or PubKey.from() (pubkey format check)
+- ts/components/dialog/OverlayMessage.tsx (has working ONS resolution to reuse)
 
 ---
 
@@ -49,19 +57,32 @@ I have commented on the issue thread to formally register my interest in impleme
 
 ### Environment Setup
 
-[Notes on setting up your local development environment - challenges you faced, how you solved them]
+- OS: Windows 11, Git Bash (run as Administrator)
+- Node: v24.16.0 (project requires 24.12.0 — minor mismatch, works fine)
+- Package manager: pnpm@10.28.1
+- pnpm install failed due to MSVC 19.38 LTO bug compiling libsession_util_nodejs
+- Fix: ran pnpm install --ignore-scripts to bypass native C++ compilation
+- Initialized git submodules and applied win-dev-setup.ps1 repair script
+- App launched using SESSION_DEV=1 to unlock the Add Admins dialog for testing
 
 ### Steps to Reproduce
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. Clone the repo and run: pnpm install --ignore-scripts
+2. Launch the app: SESSION_DEV=1 pnpm start-dev
+3. Create a new account and join any community (e.g. paste a SOGS URL into Join Community)
+4. Click the community name at the top → Settings → Add Admins
+5. Type "testname" (a valid ONS-format name) into the input field
+6. Click Add
+7. Expected: ONS name resolves to a 66-char hex public key and user is added
+8. Actual: Toast error appears — "This Account ID is invalid. Please check and try again."
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [Link to commit in your fork]
-- **Screenshots/logs:** [If applicable]
-- **My findings:** [What you discovered during reproduction]
+Branch: https://github.com/KyWB/session-desktop/tree/fix-issue-563
+Screenshot:<img width="1100" height="1006" alt="image" src="https://github.com/user-attachments/assets/a884f778-7cbb-4e9c-baae-1448ba8b5a51" />
+
+Finding: ModeratorsAddDialog.tsx validates input using PubKey.from() which 
+only accepts 66-char hex strings and never invokes the ONS resolver.
 
 ---
 
@@ -69,35 +90,48 @@ I have commented on the issue thread to formally register my interest in impleme
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+The root cause is in ModeratorsAddDialog.tsx. Input is validated directly 
+against the hex pubkey format via PubKey.from() with no prior check for 
+ONS name format and no async resolution step. The ONS resolver exists in 
+the codebase (used in OverlayMessage.tsx) but is never called here.
 
 ### Proposed Solution
-
-[High-level description of your fix approach]
+Before validating input as a hex pubkey, intercept the value and check 
+if it matches the ONS name pattern. If it does, asynchronously resolve 
+it to a public key using the existing ONS resolver, then pass the resolved 
+key to the existing submission logic.
 
 ### Implementation Plan
 
-Using UMPIRE framework (adapted):
+Understand: ModeratorsAddDialog accepts only hex pubkeys. ONS names are 
+never resolved — they just fail validation immediately.
 
-**Understand:** [Restate the problem]
+Match: OverlayMessage.tsx already implements ONS resolution successfully. 
+The same resolver and pattern can be reused here.
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+Plan:
+1. In ModeratorsAddDialog.tsx, add an ONS name format check before pubkey validation
+2. If input matches ONS pattern, call the existing async ONS resolver
+3. Show a loading state while resolution is in progress
+4. On success, pass the resolved hex key to the existing submission logic
+5. On failure, show a clear error message
 
-**Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+Implement: https://github.com/KyWB/session-desktop/tree/fix-issue-563
 
-**Implement:** [Link to your branch/commits as you work]
+Review: Will follow session-desktop CONTRIBUTING.md conventions, match 
+existing code style in ModeratorsAddDialog.tsx
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
-
-**Evaluate:** [How will you verify it works?]
+Evaluate: Manual test — entering a valid ONS name should resolve and 
+succeed. Invalid names should still show an appropriate error.
 
 ---
 
 ## Testing Strategy
-
+- Enter valid ONS name → should resolve and succeed
+- Enter invalid ONS name → should show resolution failure error  
+- Enter valid 66-char hex pubkey → existing behavior should be unchanged
+- Enter garbage input → should still show invalid error
+  
 ### Unit Tests
 
 - [ ] Test case 1: [Description]
