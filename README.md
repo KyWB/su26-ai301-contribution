@@ -134,7 +134,7 @@ succeed. Invalid names should still show an appropriate error.
   
 ### Unit Tests
 
- ✅ Test case 1: Valid 05 pubkey passes through without hitting ONS resolver
+ ✅ Test case 1: Valid 05 pubkey passes through without hitting ONS resolver  	   
  ✅ Test case 2: Whitespace is trimmed and punycode-normalized before processing
  ✅ Test case 3: Blinded 15-prefix key is rejected without calling ONS resolver
  ✅ Test case 4: 03 group key is rejected without calling ONS resolver
@@ -164,6 +164,7 @@ Multi-entry comma-separated input correctly names the failing entry in the error
 ## Implementation Notes
 
 Week 3 Progress
+
 Extracted a shared resolvePubkeyOrOns() helper into a new file 
 ts/session/utils/resolvePubkeyOrOns.ts. This function encapsulates the full 
 resolution ladder: trim + punycode-normalize → pass through valid non-blinded 
