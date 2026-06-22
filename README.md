@@ -134,30 +134,30 @@ succeed. Invalid names should still show an appropriate error.
   
 ### Unit Tests
 
- ✅ Test case 1: Valid 05 pubkey passes through without hitting ONS resolver  	   
- ✅ Test case 2: Whitespace is trimmed and punycode-normalized before processing
- ✅ Test case 3: Blinded 15-prefix key is rejected without calling ONS resolver
- ✅ Test case 4: 03 group key is rejected without calling ONS resolver
- ✅ Test case 5: Empty input returns accountIdErrorInvalid
- ✅ Test case 6: Valid ONS name resolves successfully and asserts correct lookup argument
- ✅ Test case 7: Dotted name (e.g. testname.bdx) is rejected — dots are Lokinet format, not Session ONS
- ✅ Test case 8: NotFoundError maps to onsErrorNotRecognized
- ✅ Test case 9: SnodeResponseError maps to onsErrorUnableToSearch
- ✅ Test case 10: Generic network error maps to onsErrorUnableToSearch
- ✅ Test case 11: Resolved ID that fails re-validation returns onsErrorNotRecognized
+- [x] Test case 1: Valid 05 pubkey passes through without hitting ONS resolver
+- [x] Test case 2: Whitespace is trimmed and punycode-normalized before processing
+- [x] Test case 3: Blinded 15-prefix key is rejected without calling ONS resolver
+- [x] Test case 4: 03 group key is rejected without calling ONS resolver
+- [x] Test case 5: Empty input returns accountIdErrorInvalid
+- [x] Test case 6: Valid ONS name resolves successfully and asserts correct lookup argument
+- [x] Test case 7: Dotted name (e.g. testname.bdx) is rejected — dots are Lokinet format, not Session ONS
+- [x] Test case 8: NotFoundError maps to onsErrorNotRecognized
+- [x] Test case 9: SnodeResponseError maps to onsErrorUnableToSearch
+- [x] Test case 10: Generic network error maps to onsErrorUnableToSearch
+- [x] Test case 11: Resolved ID that fails re-validation returns onsErrorNotRecognized
 
 ### Integration Tests
 
- ✅ ModeratorsAddDialog shows spinner and disables Add button during ONS resolution
- ✅ OverlayMessage (New Message flow) behavior preserved after refactor onto shared resolver
+- [x] ModeratorsAddDialog shows spinner and disables Add button during ONS resolution
+- [x] OverlayMessage (New Message flow) behavior preserved after refactor onto shared resolver
 
 ### Manual Testing
 
-Launched app with SESSION_DEV=1, navigated to Group Settings → Add Admins.
-Entering a valid 66-char hex pubkey still works as before.
-Entering "testname" (ONS format) now triggers async resolution instead of instant rejection.
-Entering garbage input still shows the invalid account error toast.
-Multi-entry comma-separated input correctly names the failing entry in the error message.
+Launched app with `SESSION_DEV=1`, navigated to Group Settings -> Add Admins.
+- Entering a valid 66-char hex pubkey still works as before
+- Entering "testname" (ONS format) now triggers async resolution instead of instant rejection
+- Entering garbage input still shows the invalid account error toast
+- Multi-entry comma-separated input correctly names the failing entry in the error message
 
 ---
 
@@ -165,28 +165,27 @@ Multi-entry comma-separated input correctly names the failing entry in the error
 
 Week 3 Progress
 
-Extracted a shared resolvePubkeyOrOns() helper into a new file 
-ts/session/utils/resolvePubkeyOrOns.ts. This function encapsulates the full 
-resolution ladder: trim + punycode-normalize → pass through valid non-blinded 
-05 IDs → reject blinded/03-group keys → ONS regex gate → network resolve → 
-re-validate. It never throws; it returns a discriminated union with a localized 
-error string on failure.
+Extracted a shared `resolvePubkeyOrOns()` helper into a new file
+`ts/session/utils/resolvePubkeyOrOns.ts`. This function encapsulates the full
+resolution ladder: trim + punycode-normalize -> pass through valid non-blinded
+`05` IDs -> reject blinded/`03`-group keys -> ONS regex gate -> network resolve -> re-validate.
+It never throws; it returns a discriminated union with a localized error string on failure.
 
-Updated ModeratorsAddDialog.tsx to resolve each comma-separated entry through 
-the shared helper before submit. The dialog now shows a spinner and disables 
-the Add button during resolution. Failures surface inline via providedError 
+Updated `ModeratorsAddDialog.tsx` to resolve each comma-separated entry through
+the shared helper before submit. The dialog now shows a spinner and disables
+the Add button during resolution. Failures surface inline via `providedError`
 rather than only a generic toast. Multi-add inputs name the specific failing entry.
 
-Refactored OverlayMessage.tsx (New Message flow) onto the same shared helper, 
-collapsing ~45 lines of inline resolution logic into a single call. Behavior 
+Refactored `OverlayMessage.tsx` (New Message flow) onto the same shared helper,
+collapsing ~45 lines of inline resolution logic into a single call. Behavior
 is fully preserved.
 
-Key decision: inputs like testname.bdx are rejected with onsErrorNotRecognized 
-rather than attempted. Session ONS names match ^\w([\w-]*[\w])?$ (no dots). 
-The .bdx/.loki suffixes are legacy Lokinet naming, not Session ONS — this 
+Key decision: inputs like `testname.bdx` are rejected with `onsErrorNotRecognized`
+rather than attempted. Session ONS names match `^\w([\w-]*[\w])?$` (no dots).
+The `.bdx`/`.loki` suffixes are legacy Lokinet naming, not Session ONS — this
 matches existing behavior in the New Message flow.
 
-Build verification: tsc --noEmit exits 0, ESLint clean on all 4 changed files, 
+Build verification: `tsc --noEmit` exits 0, ESLint clean on all 4 changed files,
 full unit suite passes with 919 tests (11 new).
 
 ### Week [Y] Progress
