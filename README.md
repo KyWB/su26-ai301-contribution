@@ -5,7 +5,7 @@
 **Student:** [Kyron Castellanos]  
 **Issue:** [https://github.com/session-foundation/session-desktop/issues/563]
 
-**Status:** Status: Phase III Complete
+**Status:** Status: Phase IV Complete
 
 ---
 
@@ -188,9 +188,12 @@ matches existing behavior in the New Message flow.
 Build verification: `tsc --noEmit` exits 0, ESLint clean on all 4 changed files,
 full unit suite passes with 919 tests (11 new).
 
-### Week [Y] Progress
+### Week 4 Progress
 
-[Continue documenting as you work]
+Opened pull request against session-foundation/session-desktop targeting the
+dev branch. Filled in the project's PR template with a full description of
+the root cause, what the PR changes, and the test approach. Rebased onto
+the latest upstream dev branch before submission
 
 ### Code Changes
 
@@ -213,31 +216,63 @@ full unit suite passes with 919 tests (11 new).
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** https://github.com/session-foundation/session-desktop/pull/1958
 
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+**PR Description:** 
+Fixes #563. ONS names entered into the Add Moderator/Admin dialog were
+immediately rejected instead of being resolved to their hex public key.
+Extracted a shared resolvePubkeyOrOns() helper and wired it into both
+ModeratorsAddDialog.tsx and OverlayMessage.tsx so both entry points
+resolve ONS names identically before passing a validated key to existing
+submission logic. Includes 11 unit tests; full suite passes at 919.
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- Awaiting first review
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** Awaiting review
 
 ---
 
 ## Learnings & Reflections
-
+Taking on the challenge of learning an entire framework was intimidating at first, however the task was able to be broken into smaller chunks, following proper scaling principles. Dependancies was a major issue for my project, and I next time plan on thoroughly reading project README's an CONTRIBUTION pages. 
 ### Technical Skills Gained
 
-[What you learned technically]
+- Learned how to navigate and contribute to a large real-world Electron +
+  React + TypeScript codebase I didn't write, finding relevant files through
+  codebase archaeology rather than documentation.
+- Gained practical experience with async input resolution patterns — how to
+  intercept user input, perform a network call, handle loading state, and
+  surface errors inline rather than through generic toasts.
+- Learned the mechanics of Windows/Git CRLF vs LF line ending enforcement
+  and how to configure Git to stop converting line endings on checkout.
+- Practiced the full open source contribution cycle: fork, branch, implement,
+  test, lint, rebase, and open a pull request with a professional descriptio
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+- The native C++ build (libsession_util_nodejs) failed due to an MSVC 19.38
+  LTO compiler bug. Worked around it by running pnpm install --ignore-scripts
+  and substituting a prebuilt binary, unblocking the rest of setup without
+  needing to fix the underlying toolchain issue.
+- ESLint flagged thousands of CRLF line ending errors across the repo after
+  Git Bash on Windows converted LF files on checkout. Resolved by setting
+  git config core.autocrlf false, clearing the index with git rm --cached,
+  and hard-resetting — then scoping ESLint runs to only the 4 changed files
+  to avoid false positives from pre-existing CRLF files in the repo.
+- Claude Code completed the implementation faster than expected, requiring
+  careful review of every line before committing to ensure I could defend
+  each decision as if I had written it myself.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+- Set git config core.autocrlf false before running any git commands on a
+  new Windows clone. This single step would have saved significant debugging
+  time on line ending errors.
+- Read CONTRIBUTING.md more carefully before starting — the project uses yarn
+  for its ready check, and knowing this earlier would have informed my local
+  tooling choices.
+- Start the PR description draft earlier in Phase III so the write-up feels
+  natural rather than something assembled at the end.
 
 ---
 
