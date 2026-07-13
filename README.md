@@ -1,23 +1,27 @@
 [contribution_readme.md](https://github.com/user-attachments/files/28405999/contribution_readme.md)
 # su26-ai301-contribution# Contribution [#]: [Issue Title]
 
-**Contribution Number:** [1 / 2 / 3]  
+**Contribution Number:** [2]  
 **Student:** [Kyron Castellanos]  
-**Issue:** [https://github.com/session-foundation/session-desktop/issues/563]
+**Issue:** [https://github.com/home-assistant/android/issues/5341]
 
-**Status:** Status: Phase IV Complete
+**Status:** Status: Phase I Complete
 
 ---
 
 ## Why I Chose This Issue
 
-I chose issue #563, "Resolve ONS anywhere we accept a Session ID", because it directly interfaces with decentralized networking protocols and cryptographic name resolution. As a student focusing on network fundamentals and security, implementing an application-layer lookup mechanism like the Oxen Name System (ONS) provides practical exposure to handling secure identity resolution in production.
+I chose issue #5341 on the Home Assistant Android repository because it provides a practical opportunity to work on a widely used, open-source IoT platform. Developing for an application that manages local network routing and device states bridges the gap between client-side software engineering and infrastructure management.
 
 I am interested in this because:
-1. It deals with security and identity mapping (resolving human-readable names to cryptographic public keys), matching my academic interests in infrastructure security.
-2. The maintainers have already verified the scope, indicating that it requires building out an input abstraction to handle an asynchronous resolution process, a loading state, and fallback error handling.
-3. The issue is officially labeled "good first issue" and "help wanted," making it an ideal ramp-up project for a new contributor to the Session ecosystem.
-4. It requires debugging data input flows and network request triggers inside a modern desktop client, allowing me to bridge software development with protocol analysis.
+
+Working on Home Assistant aligns perfectly with my current preparation for the CCNA certification, as the platform heavily relies on understanding how devices communicate and resolve across local networks.
+
+It allows me to apply my software development background—particularly my experience building complex logic in C++ and Python—to a large-scale mobile ecosystem.
+
+Troubleshooting application behavior in a networked environment serves as excellent hands-on practice for my long-term goals in penetration testing and red-teaming, where understanding endpoint behaviors and traffic flow is critical.
+
+Contributing to a major, active repository directly supports my objectives for the AI301 Open Source Capstone.
 
 From reading the issue description and thread, the problem is that certain user interfaces within the client (such as adding a moderator to an open group) fail to parse an ONS name, treating it as an invalid public key format instead of resolving it. My contribution will update the client's input handling behavior to cleanly intercept inputs, check for ONS strings, resolve them to their corresponding public keys, and seamlessly pass that data forward.
 
@@ -29,27 +33,23 @@ I have commented on the issue thread to formally register my interest in impleme
 
 ### Problem Description
 
-The Add Admins dialog in Session Desktop communities only accepts 
-66-character hexadecimal public keys as input. When a user enters 
-an ONS (Oxen Name System) name like "testname", the app rejects it 
-with an error instead of resolving it to its corresponding public key.
+The data models AssistPipelineRunStart and AssistPipelineSttEnd currently utilize a loose Map<String, Any?> structure to hold their event payloads. This forces the application to accept arbitrary data types and requires downstream components to perform manual, runtime type-casting whenever they need to read specific fields.
 
 ### Expected Behavior
 
-When a user enters a valid ONS name (e.g. "testname") into any field 
-that accepts a Session ID, the app should asynchronously resolve the 
-ONS name to its 66-character hex public key and proceed with that value.
+Event payloads for the Assist Pipeline should be explicitly mapped using strongly-typed Kotlin data classes. The application should declare properties matching the exact fields expected from the Home Assistant core server, ensuring compile-time type safety and removing arbitrary Any? casting.
 
 ### Current Behavior
 
-The app immediately rejects ONS names with the toast error: 
-"This Account ID is invalid. Please check and try again."
+The codebase uses generic key-value maps (Map<String, Any?>) for pipeline start and Speech-to-Text (STT) end events. This makes the code harder to maintain, hides the contract between the server and the app, and risks runtime crashes if a value is incorrectly cast.
 
 ### Affected Components
 
-- ts/components/dialog/ModeratorsAddDialog.tsx (validation logic)
-- ts/session/utils/String.ts or PubKey.from() (pubkey format check)
-- ts/components/dialog/OverlayMessage.tsx (has working ONS resolution to reuse)
+data/src/main/java/.../websocket/entities/ (Likely location of the Assist Pipeline data models)
+
+domain/src/main/java/.../ (Classes handling the serialization/deserialization logic for Assist WebSocket events)
+
+Any UI components or background services consuming these specific pipeline lifecycle triggers.
 
 ---
 
@@ -57,32 +57,13 @@ The app immediately rejects ONS names with the toast error:
 
 ### Environment Setup
 
-- OS: Windows 11, Git Bash (run as Administrator)
-- Node: v24.16.0 (project requires 24.12.0 — minor mismatch, works fine)
-- Package manager: pnpm@10.28.1
-- pnpm install failed due to MSVC 19.38 LTO bug compiling libsession_util_nodejs
-- Fix: ran pnpm install --ignore-scripts to bypass native C++ compilation
-- Initialized git submodules and applied win-dev-setup.ps1 repair script
-- App launched using SESSION_DEV=1 to unlock the Add Admins dialog for testing
 
 ### Steps to Reproduce
 
-1. Clone the repo and run: pnpm install --ignore-scripts
-2. Launch the app: SESSION_DEV=1 pnpm start-dev
-3. Create a new account and join any community (e.g. paste a SOGS URL into Join Community)
-4. Click the community name at the top → Settings → Add Admins
-5. Type "testname" (a valid ONS-format name) into the input field
-6. Click Add
-7. Expected: ONS name resolves to a 66-char hex public key and user is added
-8. Actual: Toast error appears — "This Account ID is invalid. Please check and try again."
 
 ### Reproduction Evidence
 
-Branch: https://github.com/KyWB/session-desktop/tree/fix-issue-563
-Screenshot:<img width="1100" height="1006" alt="image" src="https://github.com/user-attachments/assets/a884f778-7cbb-4e9c-baae-1448ba8b5a51" />
 
-Finding: ModeratorsAddDialog.tsx validates input using PubKey.from() which 
-only accepts 66-char hex strings and never invokes the ONS resolver.
 
 ---
 
@@ -90,74 +71,27 @@ only accepts 66-char hex strings and never invokes the ONS resolver.
 
 ### Analysis
 
-The root cause is in ModeratorsAddDialog.tsx. Input is validated directly 
-against the hex pubkey format via PubKey.from() with no prior check for 
-ONS name format and no async resolution step. The ONS resolver exists in 
-the codebase (used in OverlayMessage.tsx) but is never called here.
+
 
 ### Proposed Solution
-Before validating input as a hex pubkey, intercept the value and check 
-if it matches the ONS name pattern. If it does, asynchronously resolve 
-it to a public key using the existing ONS resolver, then pass the resolved 
-key to the existing submission logic.
+
 
 ### Implementation Plan
 
-Understand: ModeratorsAddDialog accepts only hex pubkeys. ONS names are 
-never resolved — they just fail validation immediately.
-
-Match: OverlayMessage.tsx already implements ONS resolution successfully. 
-The same resolver and pattern can be reused here.
-
-Plan:
-1. In ModeratorsAddDialog.tsx, add an ONS name format check before pubkey validation
-2. If input matches ONS pattern, call the existing async ONS resolver
-3. Show a loading state while resolution is in progress
-4. On success, pass the resolved hex key to the existing submission logic
-5. On failure, show a clear error message
-
-Implement: https://github.com/KyWB/session-desktop/tree/fix-issue-563
-
-Review: Will follow session-desktop CONTRIBUTING.md conventions, match 
-existing code style in ModeratorsAddDialog.tsx
-
-Evaluate: Manual test — entering a valid ONS name should resolve and 
-succeed. Invalid names should still show an appropriate error.
 
 ---
 
 ## Testing Strategy
-- Enter valid ONS name → should resolve and succeed
-- Enter invalid ONS name → should show resolution failure error  
-- Enter valid 66-char hex pubkey → existing behavior should be unchanged
-- Enter garbage input → should still show invalid error
+
   
 ### Unit Tests
 
-- [x] Test case 1: Valid 05 pubkey passes through without hitting ONS resolver
-- [x] Test case 2: Whitespace is trimmed and punycode-normalized before processing
-- [x] Test case 3: Blinded 15-prefix key is rejected without calling ONS resolver
-- [x] Test case 4: 03 group key is rejected without calling ONS resolver
-- [x] Test case 5: Empty input returns accountIdErrorInvalid
-- [x] Test case 6: Valid ONS name resolves successfully and asserts correct lookup argument
-- [x] Test case 7: Dotted name (e.g. testname.bdx) is rejected — dots are Lokinet format, not Session ONS
-- [x] Test case 8: NotFoundError maps to onsErrorNotRecognized
-- [x] Test case 9: SnodeResponseError maps to onsErrorUnableToSearch
-- [x] Test case 10: Generic network error maps to onsErrorUnableToSearch
-- [x] Test case 11: Resolved ID that fails re-validation returns onsErrorNotRecognized
 
 ### Integration Tests
 
-- [x] ModeratorsAddDialog shows spinner and disables Add button during ONS resolution
-- [x] OverlayMessage (New Message flow) behavior preserved after refactor onto shared resolver
 
 ### Manual Testing
 
-Launched app with `SESSION_DEV=1`, navigated to Group Settings -> Add Admins.
-- Entering a valid 66-char hex pubkey still works as before
-- Entering "testname" (ONS format) now triggers async resolution instead of instant rejection
-- Entering garbage input still shows the invalid account error toast
-- Multi-entry comma-separated input correctly names the failing entry in the error message
 
 ---
 
@@ -165,114 +99,44 @@ Launched app with `SESSION_DEV=1`, navigated to Group Settings -> Add Admins.
 
 Week 3 Progress
 
-Extracted a shared `resolvePubkeyOrOns()` helper into a new file
-`ts/session/utils/resolvePubkeyOrOns.ts`. This function encapsulates the full
-resolution ladder: trim + punycode-normalize -> pass through valid non-blinded
-`05` IDs -> reject blinded/`03`-group keys -> ONS regex gate -> network resolve -> re-validate.
-It never throws; it returns a discriminated union with a localized error string on failure.
 
-Updated `ModeratorsAddDialog.tsx` to resolve each comma-separated entry through
-the shared helper before submit. The dialog now shows a spinner and disables
-the Add button during resolution. Failures surface inline via `providedError`
-rather than only a generic toast. Multi-add inputs name the specific failing entry.
-
-Refactored `OverlayMessage.tsx` (New Message flow) onto the same shared helper,
-collapsing ~45 lines of inline resolution logic into a single call. Behavior
-is fully preserved.
-
-Key decision: inputs like `testname.bdx` are rejected with `onsErrorNotRecognized`
-rather than attempted. Session ONS names match `^\w([\w-]*[\w])?$` (no dots).
-The `.bdx`/`.loki` suffixes are legacy Lokinet naming, not Session ONS — this
-matches existing behavior in the New Message flow.
-
-Build verification: `tsc --noEmit` exits 0, ESLint clean on all 4 changed files,
-full unit suite passes with 919 tests (11 new).
 
 ### Week 4 Progress
 
-Opened pull request against session-foundation/session-desktop targeting the
-dev branch. Filled in the project's PR template with a full description of
-the root cause, what the PR changes, and the test approach. Rebased onto
-the latest upstream dev branch before submission
 
 ### Code Changes
 
 - **Files modified:**
-- ts/session/utils/resolvePubkeyOrOns.ts (NEW) — shared resolver helper + ResolvedPubkeyOrOns type
-- ts/components/dialog/ModeratorsAddDialog.tsx (MODIFIED) — async ONS resolution before submit, inline errors, spinner
-- ts/components/leftpane/overlay/OverlayMessage.tsx (MODIFIED) — refactored onto shared resolver
-- ts/test/session/unit/utils/resolvePubkeyOrOns_test.ts (NEW) — 11 unit tests
-- **Key commits:** https://github.com/KyWB/session-desktop/tree/fix-issue-563
-- **Approach decisions:**
-- Extracted shared helper rather than duplicating logic in each dialog — keeps both 
-  entry points identical and makes future entry points trivial to add ("anywhere" 
-  per the issue title)
-- Sequential resolution in multi-add loop (no-await-in-loop intentionally disabled) 
-  so the error message can name exactly which entry failed
-- Resolver never throws — returns discriminated union — so callers need no try/catch 
-  and error handling is always explicit
+
 
 ---
 
 ## Pull Request
 
-**PR Link:** https://github.com/session-foundation/session-desktop/pull/1958
+**PR Link:**
 
 **PR Description:** 
-Fixes #563. ONS names entered into the Add Moderator/Admin dialog were
-immediately rejected instead of being resolved to their hex public key.
-Extracted a shared resolvePubkeyOrOns() helper and wired it into both
-ModeratorsAddDialog.tsx and OverlayMessage.tsx so both entry points
-resolve ONS names identically before passing a validated key to existing
-submission logic. Includes 11 unit tests; full suite passes at 919.
+
 
 **Maintainer Feedback:**
-- Awaiting first review
 
-**Status:** Awaiting review
+
+**Status:** 
 
 ---
 
 ## Learnings & Reflections
-Taking on the challenge of learning an entire framework was intimidating at first, however the task was able to be broken into smaller chunks, following proper scaling principles. Dependancies was a major issue for my project, and I next time plan on thoroughly reading project README's an CONTRIBUTION pages. 
+
 ### Technical Skills Gained
 
-- Learned how to navigate and contribute to a large real-world Electron +
-  React + TypeScript codebase I didn't write, finding relevant files through
-  codebase archaeology rather than documentation.
-- Gained practical experience with async input resolution patterns — how to
-  intercept user input, perform a network call, handle loading state, and
-  surface errors inline rather than through generic toasts.
-- Learned the mechanics of Windows/Git CRLF vs LF line ending enforcement
-  and how to configure Git to stop converting line endings on checkout.
-- Practiced the full open source contribution cycle: fork, branch, implement,
-  test, lint, rebase, and open a pull request with a professional descriptio
+
 
 ### Challenges Overcome
 
-- The native C++ build (libsession_util_nodejs) failed due to an MSVC 19.38
-  LTO compiler bug. Worked around it by running pnpm install --ignore-scripts
-  and substituting a prebuilt binary, unblocking the rest of setup without
-  needing to fix the underlying toolchain issue.
-- ESLint flagged thousands of CRLF line ending errors across the repo after
-  Git Bash on Windows converted LF files on checkout. Resolved by setting
-  git config core.autocrlf false, clearing the index with git rm --cached,
-  and hard-resetting — then scoping ESLint runs to only the 4 changed files
-  to avoid false positives from pre-existing CRLF files in the repo.
-- Claude Code completed the implementation faster than expected, requiring
-  careful review of every line before committing to ensure I could defend
-  each decision as if I had written it myself.
+
 
 ### What I'd Do Differently Next Time
 
-- Set git config core.autocrlf false before running any git commands on a
-  new Windows clone. This single step would have saved significant debugging
-  time on line ending errors.
-- Read CONTRIBUTING.md more carefully before starting — the project uses yarn
-  for its ready check, and knowing this earlier would have informed my local
-  tooling choices.
-- Start the PR description draft earlier in Phase III so the write-up feels
-  natural rather than something assembled at the end.
 
 ---
 
