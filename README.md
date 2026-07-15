@@ -23,8 +23,6 @@ Troubleshooting application behavior in a networked environment serves as excell
 
 Contributing to a major, active repository directly supports my objectives for the AI301 Open Source Capstone.
 
-From reading the issue description and thread, the problem is that certain user interfaces within the client (such as adding a moderator to an open group) fail to parse an ONS name, treating it as an invalid public key format instead of resolving it. My contribution will update the client's input handling behavior to cleanly intercept inputs, check for ONS strings, resolve them to their corresponding public keys, and seamlessly pass that data forward.
-
 I have commented on the issue thread to formally register my interest in implementing this component.
 
 ---
