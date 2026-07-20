@@ -54,13 +54,31 @@ Any UI components or background services consuming these specific pipeline lifec
 ## Reproduction Process
 
 ### Environment Setup
+Forked and cloned the home-assistant/android repository to my local Windows machine.
 
+Installed Android Studio and opened the project.
+
+Waited for Gradle to fully sync the project and download all required Android SDKs and Kotlin dependencies (indexing was temporarily paused during the initial download, but resolved successfully upon completion).
+
+Configured a local Android emulator (Pixel profile, API level 34+) to run the compiled application.
 
 ### Steps to Reproduce
+Open the project in Android Studio.
 
+Allow Gradle sync to complete so the search indexer is active.
+
+Search the codebase for AssistPipelineRunStart and AssistPipelineSttEnd.
+
+Observe the hardcoded // TODO Replace the map comments attached directly to the runnerData and sttOutput fields.
+
+Run the application in the Android emulator and monitor the Logcat output.
+
+Trigger the "Assist" voice/text pipeline via the UI to fire off the WebSocket events and observe the incoming payload structure.
 
 ### Reproduction Evidence
+<img width="945" height="646" alt="image" src="https://github.com/user-attachments/assets/391a28d0-4457-421e-b0b5-82b97e756e7f" />
 
+<img width="865" height="327" alt="image" src="https://github.com/user-attachments/assets/d86813ff-bb2e-4bd9-8a21-8be49a179891" />
 
 
 ---
@@ -68,14 +86,28 @@ Any UI components or background services consuming these specific pipeline lifec
 ## Solution Approach
 
 ### Analysis
+The AssistPipelineRunStart and AssistPipelineSttEnd models use a loose Map<String, Any?> structure coupled with a generic MapAnySerializer. This forces downstream components to use manual, unsafe type casting to read variables. The // TODO comments explicitly ask to replace these generic maps with strongly-typed data classes.
 
+The Home Assistant Android codebase is actively migrating to kotlinx.serialization (as noted in PR #5279). Other WebSocket event responses in the project utilize distinct @Serializable data classes to enforce compile-time safety.
 
 
 ### Proposed Solution
-
+I will create two new, strongly-typed Kotlin data classes representing the exact fields expected within the runnerData and sttOutput payloads. I will then replace the generic Map<String, Any?> fields in the parent classes with references to these new types, removing the need for the MapAnySerializer.
 
 ### Implementation Plan
+Review the Home Assistant Core API documentation (or inspect live WebSocket traffic via Logcat) to determine the exact expected JSON keys and data types for both runnerData and sttOutput.
 
+Create AssistPipelineRunnerData and AssistPipelineSttOutput data classes.
+
+Apply the @Serializable annotation and map the JSON keys to Kotlin properties using @SerialName.
+
+Update AssistPipelineRunStart to replace val runnerData: Map<String, @Polymorphic Any?> with val runnerData: AssistPipelineRunnerData.
+
+Update AssistPipelineSttEnd to replace val sttOutput: Map<String, @Polymorphic Any?> with val sttOutput: AssistPipelineSttOutput.
+
+Refactor any downstream processing logic that previously accessed these maps to use the new typed properties directly.
+
+Run local unit tests and test the Assist pipeline in the emulator to ensure serialization works correctly and no regressions are introduced.
 
 ---
 
