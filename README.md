@@ -5,7 +5,7 @@
 **Student:** [Kyron Castellanos]  
 **Issue:** [https://github.com/home-assistant/android/issues/5341]
 
-**Status:** Status: Phase I Complete
+**Status:** Status: Phase II Complete
 
 ---
 
