@@ -112,23 +112,36 @@ Run local unit tests and test the Assist pipeline in the emulator to ensure seri
 ---
 
 ## Testing Strategy
-
+The primary goal of testing this refactor is to verify that the newly implemented kotlinx.serialization data classes perfectly match the structural contract of the Home Assistant core server. We must ensure the application can deserialize live JSON payloads without throwing a SerializationException or causing runtime crashes.
   
 ### Unit Tests
+Run the project's existing local JUnit tests (likely located in the testing-unit module or the websocket directory) to ensure no existing deserialization tests are failing.
 
+Update or write new unit tests that feed mock JSON strings (representing the run_start and stt_end WebSocket events) into the serializer.
+
+Assert that the JSON correctly instantiates the AssistPipelineRunStart and AssistPipelineSttEnd classes with the expected data populated in your new strongly-typed fields.
 
 ### Integration Tests
+Verify that the WebSocket repository layer successfully parses and routes the newly typed event data down to the Assist UI components.
 
+Ensure that downstream components interacting with runnerData and sttOutput no longer use manual type casting (e.g., as String) and can access the Kotlin properties directly without build errors.
 
 ### Manual Testing
+Compile and deploy the refactored application to the Android Studio emulator.
 
+Connect the app to a Home Assistant instance (or demo server).
+
+Navigate to the main dashboard and trigger the Assist feature (via text or voice command).
+
+Actively monitor Android Studio's Logcat during the interaction to guarantee no silent deserialization errors occur and that the pipeline completes successfully in the UI.
 
 ---
 
 ## Implementation Notes
+Based on the refactored code in image_929617.png and image_9295f9.png, the technical debt has been successfully resolved. The temporary MapAnySerializer and the generic Map<String, @Polymorphic Any?> types were completely removed. AssistPipelineRunStart now safely expects an AssistPipelineRunnerData object, and AssistPipelineSttEnd expects an AssistPipelineSttOutput object. This successfully implements the maintainers' request by enforcing compile-time type safety for the Assist WebSocket payloads.
 
 Week 3 Progress
-
+Phase III (Build) coding requirements are officially complete. The codebase was successfully refactored to eliminate the generic maps in favor of strict data classes, solving Issue #5341. The next steps are to finalize local testing, commit these changes to the fix-issue-5341 branch, and move into Phase IV to open the Pull Request.
 
 
 ### Week 4 Progress
