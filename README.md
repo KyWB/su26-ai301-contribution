@@ -5,7 +5,7 @@
 **Student:** [Kyron Castellanos]  
 **Issue:** [https://github.com/home-assistant/android/issues/5341]
 
-**Status:** Status: Phase III Complete
+**Status:** Status: Phase IV Complete
 
 ---
 
@@ -150,36 +150,57 @@ Phase III (Build) coding requirements are officially complete. The codebase was 
 ### Code Changes
 
 - **Files modified:**
-
+  common/src/main/java/io/homeassistant/companion/android/common/data/websocket/impl/entities/AssistPipelineEventData.kt
 
 ---
 
 ## Pull Request
 
 **PR Link:**
+https://github.com/home-assistant/android/compare/main...KyWB:android:main
 
 **PR Description:** 
+Resolves #5341.
 
+This PR migrates the AssistPipelineRunStart and AssistPipelineSttEnd payloads from generic Map<String, Any?> structures to strongly-typed @Serializable data classes (AssistPipelineRunnerData and AssistPipelineSttOutput).
+
+Changes included:
+
+Removed the MapAnySerializer dependency from both pipeline events.
+
+Enforced compile-time type safety for incoming WebSocket payloads.
+
+Aligned the Assist pipeline data models with the project's broader migration to kotlinx.serialization.
+
+Refactored downstream components to access the typed properties directly rather than through manual string-key casting.
 
 **Maintainer Feedback:**
 
 
 **Status:** 
-
+Open-Pending Review 
 ---
 
 ## Learnings & Reflections
 
 ### Technical Skills Gained
+Kotlin Serialization: Gained hands-on experience using kotlinx.serialization to enforce type safety on dynamic JSON payloads from WebSocket streams.
 
+Android Build Systems: Navigated a massive native Android codebase, learning how to manage Gradle syncs, SDK dependencies, and the Android Studio indexing process.
+
+Refactoring Technical Debt: Learned how to safely remove legacy workarounds (like generic Any? casting) and implement rigid data contracts without breaking downstream UI components.
 
 
 ### Challenges Overcome
+Environment Configuration: The initial project setup involved heavy Gradle downloads that temporarily broke file indexing and search capabilities. I overcame this by monitoring background build tasks and waiting for the local environment to fully stabilize before attempting to trace code.
 
+Mapping Undocumented Payloads: Identifying the exact JSON fields required for the new data classes required running the app in an emulator, triggering the Assist UI, and analyzing the raw WebSocket streams in Logcat to guarantee the Kotlin properties matched the server's output perfectly.
 
 
 ### What I'd Do Differently Next Time
+Check Issue Status Earlier: Before diving into the codebase, I would thoroughly check the issue thread to see if another contributor had recently claimed it or if a linked PR had already resolved the problem.
 
+Incremental Builds: Rather than waiting to compile until the very end, I would run Gradle builds immediately after modifying the core data classes to catch downstream casting errors much earlier in the development cycle.
 
 ---
 
