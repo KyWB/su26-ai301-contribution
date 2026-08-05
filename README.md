@@ -162,7 +162,7 @@ Phase III (Build) coding requirements are officially complete. The codebase was 
 ## Pull Request
 
 **PR Link:**
-https://github.com/home-assistant/android/compare/main...KyWB:android:main
+[https://github.com/home-assistant/android/compare/main...KyWB:android:main](https://github.com/KyWB/android/pull/1)
 
 **PR Description:** 
 Resolves #5341.
