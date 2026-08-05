@@ -152,6 +152,11 @@ Phase III (Build) coding requirements are officially complete. The codebase was 
 - **Files modified:**
   common/src/main/java/io/homeassistant/companion/android/common/data/websocket/impl/entities/AssistPipelineEventData.kt
 
+  <img width="762" height="261" alt="image" src="https://github.com/user-attachments/assets/98e5da1b-85c5-47e8-99d5-b69ee3af562e" />
+  <img width="810" height="377" alt="image" src="https://github.com/user-attachments/assets/c96ddacb-e03b-427c-9bc8-70505c8bbcb0" />
+
+
+
 ---
 
 ## Pull Request
